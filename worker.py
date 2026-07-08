@@ -18,8 +18,10 @@ from supabase import create_client
 
 load_dotenv()
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY")
+# .strip() defends against stray whitespace/newlines in .env or CI secrets,
+# which otherwise cause a confusing "Invalid URL" only in the cloud.
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "").strip()
+SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "").strip()
 
 if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
     sys.exit("Missing SUPABASE_URL / SUPABASE_SERVICE_KEY. Did you fill in .env?")
