@@ -1,0 +1,34 @@
+name: Poll the queue
+
+# WHEN this runs:
+on:
+  # Automatically, every 10 minutes. This is the scheduler.
+  schedule:
+    - cron: "*/10 * * * *"
+  # Also let us trigger it by hand from the GitHub UI (handy for testing,
+  # and later for a dashboard "run now" button).
+  workflow_dispatch: {}
+
+# Never let two poll runs overlap. If one is already going, a new one waits
+# instead of running at the same time and double-processing a job.
+concurrency:
+  group: poll
+  cancel-in-progress: false
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    # Hard cap: if a run hangs, kill it after 15 min so it can't run forever
+    # (and can't burn unlimited CI minutes). This is a reliability guard.
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python worker.py poll
+        # Secrets come from GitHub repo settings, NOT from a committed file.
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
